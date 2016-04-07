@@ -12,12 +12,13 @@ import asyncore
 import socket
 from Debug import pyDebugger
 
-class pyTCPClient(sIP):
+class pyTCPClient():
 
-    def __init__(self, sIP=127.0.0.1,sPort=8888,sEncryption=False,bDebug = False,sBufferSize=8192):
+    def __init__(self, sIP="127.0.0.1",sPort=8888,sEncryption=False,bDebug = False,sBufferSize=8192):
+        self.RetryAttempts = 10
         self.Debugger = pyDebugger(self,bDebug,False)
         self.IP = sIP
-        self.Port = sPort
+        self.Port = int(sPort)
         self.Encryption = sEncryption
         self.BufferSize = sBufferSize
         self.Connection = None
@@ -44,22 +45,22 @@ class pyTCPClient(sIP):
         return ip
 
     def Open(self):
-        self.Debugger.Log("Attempting to open a connection to " + self.IP + ":" + self.Port + "...",
-            endd='')
+        self.Debugger.Log("Attempting to open a connection to " + self.IP + ":" + str(self.Port) +
+            "...", endd='')
+        if self.Connection == None:
+            self.Connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            if self.Connection == None:
-                self.Connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            try:
-                self.Connection.connect((self.IP,self.Port))
-                self.Debugger.Log("...Success!",PrintName=False)
-                return True
-            except Exception as e:
-                self.Debugger.Log("...Failed!",PrintName=False)
-                self.Debugger.Log(str(e)
-                return False
+            self.Connection.connect((self.IP,self.Port))
+            self.Debugger.Log("...Success!",PrintName=False)
+            return True
+        except Exception as e:
+            self.Debugger.Log("...Failed!",PrintName=False)
+            self.Debugger.Log(str(e))
+            return False
+     
 
     def Read(self,ReadBytes=None, Blocking=0, AutoConnect=True):
-        self.Debugger.Log("Attempting to read data...")
+        self.Debugger.Log("Attempting to read data from " + self.IP + ":" + str(self.Port) + "...")
         if ReadBytes == None:
             ReadBytes = self.BufferSize
         if Blocking == 0:
@@ -82,24 +83,53 @@ class pyTCPClient(sIP):
                 sData = ""
         if sData == b'':
             return ""
-        else
+        else:
             return sData.decode("UTF-8")
         
-    def Write(self,Data, Blocking=True, AutoConnect=True):
+    def Write(self,Data, Blocking=True, AutoConnect=True,pParent=None):
         if Blocking == True:
-            bData = Data.encode("UTF-8")
-            if len(bData) < self.BufferSize
-                self.Connection.send(bData)
+            return self._write(Data,AutoConnect,None)
+        else:
+            threading.Thread(target=self._write, args=(self,Data,AutoConnect,pParent)).start()
+        
+    def _write(self,Data, AutoConnect,pParent):
+        self.Debugger.Log("Attempting to write data to " + self.IP + ":" + str(self.Port) + "...")
+        iChunks = 0
+        numTries = 0
+        bData = Data.encode("utf-8")
+        while iChunks < len(bData):
+            numTries += 1
+            if (iChunks + self.BufferSize) > len(bData):
+                bBufSz = len(bData) - iChunks
             else:
-                iChunks = 0
-                while iChunks < len(bData):
-                    if (iChunks + self.BufferSize) > len(bData):
-                        bBufSz = len(bData) - iChunks
-                    else:
-                        bBufSz = self.BufferSize)
-                    self.Connection.send(bData[iChunks:self.BufferSize])
-                    iChunks += self.BufferSize
-                
+                bBufSz = self.BufferSize
+            try:
+                self.Debugger.Log("Writing " + str(bBufSz) + " bytes...",endd='')
+                if self.Connection == None and AutoConnect == True:
+                    #self.Debugger.Log("Automatically opening connection to " + self.IP + ":" + 
+                        #self.Port + "...",endd='')
+                    self.Open()
+                    #if self.Open() == True:
+                        #self.Debugger.Log("...Success!",PrintName=False)
+                    #else:
+                        #self.Debugger.Log("...Failed!",PrintName=False)
+                        #return 0
+                self.Connection.send(bData[iChunks:(iChunks+bBufSz)])
+                self.Debugger.Log("...Success! (" + str(numTries) + " attempts)",PrintName=False)
+                iChunks += bBufSz
+                numTries = 0
+            except Exception as e:
+                self.Debugger.Log("...Failed (" + str(numTries) + " attempts)",PrintName=False)
+                self.Debugger.Log("Closing Connection...")
+                self.Connection = None
+                self.Debugger.Log(str(e))
+                if numTries >= self.RetryAttempts:
+                    break;    
+        if pParent == None:
+            return iChunks
+        else:
+            pParent.WriteCallBack(iChunks)
+            
     
     
     
