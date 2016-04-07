@@ -23,27 +23,6 @@ class pyTCPClient():
         self.BufferSize = sBufferSize
         self.Connection = None
 
-    def get_interface_ip(self, ifname):
-        try:
-            self.Debugger.Log("get_interface_ip: Creating Network Socket...", endd='')
-            sa = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.Debugger.Log("Success!",PrintName=False)
-        except Exception as e:
-            self.Debugger.Log("Failed!",PrintName=False)
-            self.Debugger.Log(str(e))
-        try:
-            self.Debugger.Log("get_interface_ip: Getting IP from interface " + ifname + "...", 
-                endd='')
-            ip = socket.inet_ntoa(fcntl.ioctl(sa.fileno(), 0x8915, struct.pack('256s', 
-                bytes(ifname[:15], 'UTF-8')))[20:24])
-            sa.shutdown()
-            sa.close()
-            self.Debugger.Log("...Set to " + ip,PrintName=False)
-        except Exception as e:
-            self.Debugger.Log("...FAILED",PrintName=False)
-            self.Debugger.Log(str(e))
-        return ip
-
     def Open(self):
         self.Debugger.Log("Attempting to open a connection to " + self.IP + ":" + str(self.Port) +
             "...", endd='')
