@@ -1,0 +1,107 @@
+#############################################################
+# Title: Python GiTSTCP Class Documenation                  #
+# Description: Documentation for the Got iT Services TCP    #
+#              python class                                 #
+# Version:                                                  #
+#   * Document Version 1.0 04/07/2016 RC                    #
+#                                                           #
+# Author: Richard Cintorino (c) Richard Cintorino 2016      #
+#############################################################
+
+pyTCPClient Class
+
+    Usage: 
+
+    from TCPClient import pyTCPClient
+    self.TCPC = pyTCPClient("IP Address", "Port",Encryption,Debug,"Buffer Size")
+    
+    self.TCPC.Close() # Close port
+    
+    self.TCPC.Open() # Open connection based on information in memory (IP, Port, etc...)
+    
+    Data = self.TCPC.Read()
+    
+    self.TCPC.Read(ReadBytes=None,Blocking=0,Autoconnect=True) #Read # of bytes while blocking
+    
+    self.TCPC.Write(ReadBytes=None,Blocking=X,Autoconnect=True) #Non-blocking read # of bytes
+    #The above function uses the blocking value to timeout after that period, the current
+    #   implimentation isn't truly non-blocking
+    
+    self.TCPC.Write(Data,Blocking=True,AutoConnect=True,pParent=None) #Write while blocking
+    #    Automatically open connection and write while blocking
+
+    self.TCPC.Write(Data,Blocking=False,AutoConnect=True,pParent=Parent) #Write without blocking
+    #    Automatically open connection and write not blocking
+    #The above function requries the partent to use queue loop. It also requires
+    #   the parent to have a function "WriteCallBack". The "WriteCallBack" function is used to 
+    #   process the data received
+        
+    #Note: If "WriteCallBack" doesn't need to operate within the same thread, queue is not required
+    
+    __init__ Variables:
+    
+        sIP (default 127.0.0.1):
+            IP address of server to connect to
+        
+        sPort (default 8888):
+            Port on server to conenct to
+        
+        sEncryption (default False):
+            Enable SSL communications (Currently not implimented)
+        
+        bDebug (default False):
+            Print all debug info to stdout
+        
+        sBufferSize (default 8192):
+            Default chunk size to read or write (buffer size). 1024 is good for 10MB Lan
+        
+    Read Variables:
+        
+        ReabBytes (default None):
+            Number of bytes to read
+        
+        Blocking (default 0):
+            0: means blocking
+            any other value indicated the number of seconds to block before timing out
+
+        AutoConnect (default True):
+            if there is no connection, automatically attempt to make a connection
+            
+            
+    Write Variables:
+    
+        Data:
+            Data to be written to socket
+        
+        Blocking (default True):
+            True: Write is blocking, 
+            False: Write is done in separate thread with call back
+        
+        pParent (default None):
+            Parent class with "WriteCallback" function
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
