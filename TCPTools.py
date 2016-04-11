@@ -17,6 +17,7 @@ from Debug import pyDebugger
 class pyTCPTools():
 
     def get_interface_ip(self, ifname):
+        ip = ""
         try:
             self.Debugger.Log("get_interface_ip: Creating Network Socket...", endd='')
             sa = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
