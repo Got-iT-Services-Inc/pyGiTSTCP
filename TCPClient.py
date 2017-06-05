@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 #############################################################
 # Title: Python TCP Client Class                            #
 # Description: Wrapper around TCP Client for easy handing   #
@@ -10,6 +11,8 @@
 
 import asyncore
 import socket
+import ntplib
+from time import ctime
 from Debug import pyDebugger
 
 class pyTCPClient():
@@ -36,7 +39,6 @@ class pyTCPClient():
             self.Debugger.Log("...Failed!",PrintName=False)
             self.Debugger.Log(str(e))
             return False
-     
 
     def Read(self,ReadBytes=None, Blocking=0, AutoConnect=True):
         self.Debugger.Log("Attempting to read data from " + self.IP + ":" + str(self.Port) + "...")
@@ -64,13 +66,13 @@ class pyTCPClient():
             return ""
         else:
             return sData.decode("UTF-8")
-        
+
     def Write(self,Data, Blocking=True, AutoConnect=True,pParent=None):
         if Blocking == True:
             return self._write(Data,AutoConnect,None)
         else:
             threading.Thread(target=self._write, args=(self,Data,AutoConnect,pParent)).start()
-        
+
     def _write(self,Data, AutoConnect,pParent):
         self.Debugger.Log("Attempting to write data to " + self.IP + ":" + str(self.Port) + "...")
         iChunks = 0
@@ -108,8 +110,17 @@ class pyTCPClient():
             return iChunks
         else:
             pParent.WriteCallBack(iChunks)
-            
-    
-    
-    
-    
+
+    def GetUTCTime(self,NTPServer="pool.ntp.org", NTPVersion=3):
+        if not hasattr(self, "NTPC"):
+            self.NTPC = ntplib.NTPClient()
+            self.NTP_Version = NTPVersion
+            self.NTP_URL = NTPServer
+        ntpResponse = self.NTPC.request(self.NTP_URL,self.NTP_Version)
+        self.Debugger.Log("Current Time is: " + ctime(ntpResponse.tx_time))
+        return ctime
+
+
+#Test NTP
+#TCPC = pyTCPClient(bDebug=True)
+#TCPC.GetUTCTime()
